@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <u id="div-wrapper">
+        <ul id="div-wrap">
+
+        </ul>
+    </div>
+    
+</body>
+<script src=""></script>
+<script>
+    const apiUrl = 'http://127.0.0.1:8000/api/recordings/'
+    // fetch_videos.js
+
+    // Function to fetch and display videos
+    async function fetchVideos() {
+        try {
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const data = await response.json();
+            const videoList = document.getElementById('div-wrap');
+            data.forEach((video) => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <h2>${video.video_title}</h2>
+                    <a href='${video.video_link}'>watch here</a>
+                    
+                    
+                    <!-- <video controls>
+                        <source src="${video.video_link}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video> -->
+                `;
+                videoList.appendChild(listItem);
+            });
+        } catch (error) {
+            console.error('Fetch error:', error);
+        }
+    }
+
+// Call the fetchVideos function to fetch and display videos
+fetchVideos();
+
+</script>
+</html>

@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 
+import dj_database_url
 from pydantic import PostgresDsn
 from pydantic_settings import BaseSettings
 
@@ -21,7 +22,7 @@ import os
 class GeneralSettings(BaseSettings):
     DEBUG: bool = False
     SECRET_KEY: str
-    
+    DATABASE_URL: PostgresDsn
 
 GENERAL_SETTINGS = GeneralSettings()
 
@@ -66,12 +67,34 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ],
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.MultiPartParser",
+    ],
+    "DEFAULT_CONTENT_NEGOTIATION_CLASS": "rest_framework.negotiation.DefaultContentNegotiation",
+    # "DEFAULT_FILTER_BACKENDS": "django_filters.rest_framework.DjangoFilterBackend",
+    "EXCEPTION_HANDLER": "rest_framework.views.exception_handler",
+    "SEARCH_PARAM": "filter[search]",
+    "TEST_REQUEST_RENDERER_CLASSES": [
+        "rest_framework.renderers.MultiPartRenderer",
+        "rest_framework.renderers.JSONRenderer",
+    ],
+    "TEST_REQUEST_DEFAULT_FORMAT": "multipart",
+}
+
 ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR, 'templates'],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -91,9 +114,25 @@ WSGI_APPLICATION = "config.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    # "default": {
+    #     "ENGINE": "django.db.backends.sqlite3",
+    #     "NAME": BASE_DIR / "db.sqlite3",
+    # }
+    #  "default": {
+    #     **dj_database_url.config(conn_max_age=600, conn_health_checks=True),
+    #     "TIMEZONE": "UTC",
+    #     "ATOMIC_REQUESTS": True,
+    #     "OPTIONS": {
+    #         "client_encoding": "UTF8",
+    #     },
+    # }
+     'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'hngExtension',
+        'USER': 'postgres',
+        'HOST': 'localhost',
+        'PASSWORD': '2030',
+        'PORT': '5432'
     }
 }
 
@@ -133,6 +172,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
+
+# MEDIA SETTINGS
+
+MEDIA_URL = '/media/'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
