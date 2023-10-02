@@ -8,10 +8,15 @@
 <body>
     <h2>Video Play</h2>
     <video controls autoplay>
-        <source src="{{ video }}" type="video/mp4">
+        <source src="{{ video }}.mp4" type="video/mp4">
         <!-- Provide the VTT transcript file as a track -->
-        <track kind="subtitles" src="{{ transcript }}" srclang="en" label="English">
-        
+        <!-- WebM format -->
+        <source src="{{ video }}.webm" type="video/webm">
+        <!-- Ogg format -->
+        <source src="{{ MEDIA_URL }}{{ video }}.ogg" type="video/ogg">
+
+
+        <track kind="subtitles" src="{{ transcript }}" srclang="en" label="English">    
     </video>
     
     <!-- Transcript Display -->
