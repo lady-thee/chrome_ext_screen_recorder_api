@@ -11,6 +11,14 @@ pydantic = "*"
 pydantic-settings = "*"
 django-cors-headers = "*"
 git-filter-repo = "*"
+moviepy = "*"
+speechrecognition = "*"
+ez-setup = "*"
+pillow = "*"
+dj-database-url = "*"
+psycopg2-binary = "*"
+openai-whisper = "*"
+torch = "*"
 
 [dev-packages]
 

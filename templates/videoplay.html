@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h2>Video Play</h2>
+    <video controls autoplay>
+        <source src="{{ video }}" type="video/mp4">
+        <!-- Provide the VTT transcript file as a track -->
+        <track kind="subtitles" src="{{ transcript }}" srclang="en" label="English">
+        
+    </video>
+    
+    <!-- Transcript Display -->
+    <div id="transcript-container">
+        <p id="transcript"></p>
+    </div>
+</body>
+<script>
+    // JavaScript code to synchronize transcript with video playback
+    const video = document.querySelector('video');
+    const transcript = document.getElementById('transcript');
+    
+    video.addEventListener('timeupdate', () => {
+        // Get the current time of the video
+        const currentTime = video.currentTime;
+        
+        // Find the corresponding transcript segment
+        const transcriptSegments = document.querySelectorAll('track[default] > track > cue');
+        
+        for (const segment of transcriptSegments) {
+            const start = segment.startTime;
+            const end = segment.endTime;
+            const text = segment.text;
+            
+            // Check if the current time falls within this transcript segment
+            if (currentTime >= start && currentTime <= end) {
+                transcript.textContent = text;
+                break; // Exit loop once the correct segment is found
+            }
+        }
+    });
+</script>
+</html>
