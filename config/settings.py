@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 
-import dj_database_url
+# import dj_database_url
 from pydantic import PostgresDsn
 from pydantic_settings import BaseSettings
 
@@ -55,11 +55,14 @@ INSTALLED_APPS = [
 
     "api.apps.ApiConfig",
 
+    "corsheaders",
+
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    'corsheaders.middleware.CorsMiddleware', 
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -108,6 +111,14 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
+
+
+CSRF_COOKIE_NAME = 'my_csrf_cookie'
+
+CSRF_COOKIE_SECURE = True  
+
+CSRF_HEADER_NAME = 'X-CSRFToken'  # Change if needed
+
 
 
 # Database
@@ -168,10 +179,18 @@ USE_I18N = True
 USE_TZ = True
 
 
+CORS_ALLOW_ALL_ORIGINS = True
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
+
+STATIC_ROOT = [BASE_DIR / 'static']
 
 # MEDIA SETTINGS
 

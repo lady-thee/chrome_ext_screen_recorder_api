@@ -1,7 +1,12 @@
 import datetime
 import logging
 import os
+import uuid
 import whisper
+import datetime
+import logging
+import os
+from api.tasks import transcribe_video
 
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -17,46 +22,63 @@ from rest_framework.response import Response
 
 from api.models import ScreenRecording
 from api.serializers import ScreenRecordingSerializer, ListVideosSerializer, EditFileNameSerializer
-
+import ffmpeg 
 
 class VideoUploadAPIView(generics.CreateAPIView):
     serializer_class = ScreenRecordingSerializer
     queryset = ScreenRecording.objects.all()
     parser_classes = (FileUploadParser,)
+    http_method_names = ['post']
 
 
     def create(self, request, *args, **kwargs):
         try:
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
+            video_data = request.body  # Get the binary video data from the request body
+            filename = 'recording.mp4'
 
-            video_chunks = request.data.get('video_chunks')
-            
-            combined_data = b''.join([bytes(chunk) for chunk in video_chunks])
-            content_file = ContentFile(combined_data)
-            filename = content_file.name
-            file_path = default_storage.save(filename, content_file)
+            # Validate binary data (example: check for minimum size)
+            if len(video_data) < 100:
+                return Response({'error': 'Invalid binary data'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # file_path = default_storage.save(filename, ContentFile(file.read()))
-            file_url = default_storage.url(file_path)
+
+            unique_filename = str(uuid.uuid4()) + '_recording.mp4'
 
             instance = ScreenRecording.objects.create(
-                video_title=filename, 
-                video_file=content_file, 
-                video_url=file_url, 
+                video_title=filename,
+                video_file=ContentFile(video_data, name=filename),
+                # video_url=file_url,
                 video_link=reverse('api:play', kwargs={'filename': filename}),
             )
-            print(instance.video_url)
+            print(instance)
+            # print(instance.video_file)
             instance.save()
 
-            # url_function(instance.id, instance.video_file, instance.video_link)
-            
+            # Convert the binary data to a playable video format (e.g., MP4) using MoviePy
+            try:
+                 # Convert the binary data to a playable video format (e.g., MP4) using FFmpeg
+                 # Convert the binary data to a playable video format (e.g., MP4) using FFmpeg
+                input_filename = instance.video_file.path
+                output_filename = instance.video_file.path.replace('.mp4', '_converted.webm')
 
-            return Response({'message': 'Video Upload Complete!'}, status=status.HTTP_201_CREATED)
+                # Use FFmpeg to perform the conversion
+                (
+                    ffmpeg.input(input_filename)
+                    .output(output_filename, vcodec='libvpx', acodec='copy')
+                    .run()
+                )
 
+                # Update the instance with the converted video file
+                instance.video_file = ContentFile(open(output_filename, 'rb').read(), name=unique_filename)
+                instance.save()
+
+                return Response({'message': 'Video Upload Complete!'}, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({'error': str(e)})
         except Exception as e:
             return Response({'error': str(e)}, status.HTTP_400_BAD_REQUEST)
         
+
+
 
 class VideoListAPIView(generics.ListAPIView):
     serializer_class = ListVideosSerializer
@@ -67,22 +89,11 @@ class VideoListAPIView(generics.ListAPIView):
 def video_play_back(request, filename):
     video_path = os.path.join(settings.MEDIA_ROOT, filename)
     print(video_path)
-    model = whisper.load_model('base=en')
-    options = whisper.DecodingOptions(language='en', fp16=True)
-    result = model.transcribe(video_path, options=options)
-
-    save_target = os.path.join(settings.MEDIA_ROOT, 'transcript.vtt')
     
-    with open(save_target, 'w') as file:
-        for indx, segment in enumerate(result['segments']):
-            file.write(str(indx + 1) + '\n')  
-            file.write(str(datetime.timedelta(seconds=segment['start'])) + '-->' + str(datetime.timedelta(seconds=segment['end'])) + '\n')
-            file.write(segment['text'].strip() + '\n')
-            file.write('\n') 
-
-    context = {
+    vtt_url = transcribe_video(video_path)
+    context ={
         'video': video_path,
-        'transcript': save_target
+        'transcript': vtt_url
     }
 
     return render(request, 'videoplay.html', context)
